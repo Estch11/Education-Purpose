@@ -58,11 +58,6 @@ local function setupESP()
             leavingPlayer.Character.Highlight:Destroy()
         end
     end)
-
-    game.Players.PlayerAdded:Connect(function(newPlayer)
-        newPlayer.CharacterAdded:Wait()
-        createESP(newPlayer.Character)
-    end)
 end
 
 -- Aimbot Variables
@@ -97,7 +92,7 @@ local function updateAimbot()
             -- Lock on to the closest player
             if closestPlayer then
                 lockOnPlayer = closestPlayer
-                local targetPosition = closestPlayer.Character.HumanoidRootPart.Position
+                local targetPosition = closestPlayer.Character.HumanoidRootPart.Position + Vector3.new(0, 1.5, 0) -- Aim slightly above the player's feet
                 local camera = workspace.CurrentCamera
                 local lookAt = (targetPosition - camera.CFrame.Position).unit
                 camera.CFrame = CFrame.new(camera.CFrame.Position, camera.CFrame.Position + lookAt)
