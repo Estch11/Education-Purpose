@@ -65,7 +65,85 @@ local function setupESP()
     end)
 end
 
--- Add ESP Toggle Button
+-- Aimbot Variables
+local aimbotEnabled = false
+local lockOnPlayer = nil
+local mouse = game.Players.LocalPlayer:GetMouse()
+
+-- Aimbot Functionality
+local function updateAimbot()
+    while true do
+        wait(0.1) -- Adjust the frequency of checks as needed
+
+        if aimbotEnabled then
+            local closestPlayer = nil
+            local closestDistance = math.huge
+            
+            -- Find the closest player
+            for _, targetPlayer in pairs(game.Players:GetPlayers()) do
+                if targetPlayer ~= game.Players.LocalPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                    local playerPosition = targetPlayer.Character.HumanoidRootPart.Position
+                    local screenPosition = workspace.CurrentCamera:WorldToScreenPoint(playerPosition)
+                    local distance = (Vector2.new(screenPosition.X, screenPosition.Y) - Vector2.new(mouse.X, mouse.Y)).magnitude
+                    
+                    -- Check if the player is within a certain range
+                    if distance < 200 and distance < closestDistance then
+                        closestDistance = distance
+                        closestPlayer = targetPlayer
+                    end
+                end
+            end
+            
+            -- Lock on to the closest player
+            if closestPlayer then
+                lockOnPlayer = closestPlayer
+                local targetPosition = closestPlayer.Character.HumanoidRootPart.Position
+                local camera = workspace.CurrentCamera
+                local lookAt = (targetPosition - camera.CFrame.Position).unit
+                camera.CFrame = CFrame.new(camera.CFrame.Position, camera.CFrame.Position + lookAt)
+            else
+                lockOnPlayer = nil
+            end
+        else
+            lockOnPlayer = nil
+        end
+    end
+end
+
+-- Aimbot Toggle Button
+Tabs.Main:AddButton({
+    Title = "Toggle Aimbot",
+    Description = "Enable or disable Aimbot.",
+    Callback = function()
+        aimbotEnabled = not aimbotEnabled
+        if aimbotEnabled then
+            Fluent:Notify({
+                Title = "Aimbot Enabled",
+                Content = "Aimbot has been enabled.",
+                Duration = 5
+            })
+            task.spawn(updateAimbot) -- Start the aimbot loop
+        else
+            Fluent:Notify({
+                Title = "Aimbot Disabled",
+                Content = "Aimbot has been disabled.",
+                Duration = 5
+            })
+        end
+    end
+})
+
+-- Mouse Movement Detection to Unlock Aimbot
+local lastMousePosition = mouse.Hit.p
+mouse.Move:Connect(function()
+    local currentMousePosition = mouse.Hit.p
+    if (currentMousePosition - lastMousePosition).magnitude > 10 then -- Adjust threshold as needed
+        lockOnPlayer = nil -- Unlock if mouse moved fast
+    end
+    lastMousePosition = currentMousePosition
+end)
+
+-- ESP Toggle Button
 local espEnabled = false
 Tabs.Main:AddButton({
     Title = "Toggle ESP",
@@ -93,14 +171,6 @@ Tabs.Main:AddButton({
         end
     end
 })
-
--- Other UI Elements (Paragraps, Buttons, Toggles, Sliders etc.)
-Tabs.Main:AddParagraph({
-    Title = "Paragraph",
-    Content = "This is a paragraph.\nSecond line!"
-})
-
--- (Continue adding your previous UI elements here, same as in your original script)
 
 -- Add-ons Configuration
 SaveManager:SetLibrary(Fluent)
